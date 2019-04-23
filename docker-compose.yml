@@ -23,8 +23,8 @@ services:
       context: .
       dockerfile: ./deployment/web/Dockerfile
     container_name: openroad
-    volumes:
-      - /usr/share/nginx/html/output:/strg
+#    volumes:
+#      - /usr/share/nginx/html/output:/strg
     depends_on:
       - postgres
     env_file: src/.env
@@ -38,8 +38,8 @@ services:
       context: .
       dockerfile: ./deployment/celery/Dockerfile
     container_name: celery
-    volumes:
-      - /usr/share/nginx/html/output:/strg
+#    volumes:
+#      - /usr/share/nginx/html/output:/strg
     depends_on:
       - postgres
       - broker

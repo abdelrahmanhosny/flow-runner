@@ -12,7 +12,7 @@ try:
     env = environ.Env()
     if env.bool('READ_ENVFILE', default=True):
         env.read_env(ENV_PATH)
-    conn = psycopg2.connect(dbname=env('POSTGRES_DB', default=''), user=env('POSTGRES_USER', default=''), password=env('POSTGRES_PASSWORD', default=''), host="postgres")
+    conn = psycopg2.connect(dbname=env('POSTGRES_DB', default=''), user=env('POSTGRES_USER', default=''), password=env('POSTGRES_PASSWORD', default=''), host=env('POSTGRES_HOST', default='postgres'))
 except psycopg2.OperationalError:
     sys.exit(-1)
 sys.exit(0)
@@ -25,14 +25,6 @@ until postgres_ready; do
 done
 
 >&2 echo "Postgres is up - continuing..."
-
-# source Timberwolf environment
-orig_dir=`pwd`
-cd /home/bill/openroad.release
-source setenv.sh
-cd /home/bill/openroad.release/bin/itools.2.0.0pre43omega20z5
-source setenv.sh
-cd $orig_dir
 
 # start celery worker
 celery -A flow worker -l info

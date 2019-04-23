@@ -12,6 +12,6 @@ class RunnerStartFlow(APIView):
         if not flow_uuid or not flow_repo_url:
             return Response('Missing parameters', status=status.HTTP_400_BAD_REQUEST)
 
-        start_flow_task.delay(flow_uuid, flow_repo_url)
+        # start_flow_task.delay(flow_uuid, flow_repo_url)
 
         return Response('Received', status=status.HTTP_202_ACCEPTED)

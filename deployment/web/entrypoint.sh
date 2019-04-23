@@ -12,7 +12,7 @@ try:
     env = environ.Env()
     if env.bool('READ_ENVFILE', default=True):
         env.read_env(ENV_PATH)
-    conn = psycopg2.connect(dbname=env('POSTGRES_DB', default=''), user=env('POSTGRES_USER', default=''), password=env('POSTGRES_PASSWORD', default=''), host="postgres")
+    conn = psycopg2.connect(dbname=env('POSTGRES_DB', default=''), user=env('POSTGRES_USER', default=''), password=env('POSTGRES_PASSWORD', default=''), host=env('POSTGRES_HOSY', default='postgres'))
 except psycopg2.OperationalError:
     sys.exit(-1)
 sys.exit(0)
@@ -35,8 +35,4 @@ if [ "x$LOAD_DATA" = 'xon' ]; then
     python /src/manage.py loaddata /src/fixtures/*.json
 fi
 
-# collect static files
-find . -name '*.pyc' -delete && \
-   python /src/manage.py collectstatic --noinput
-
-uwsgi --http-auto-chunked --http-keepalive --static-map /static=/src/assets --static-map /media=/src/media
+uwsgi --http-auto-chunked --http-keepalive
