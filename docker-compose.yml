@@ -24,8 +24,7 @@ services:
       dockerfile: ./deployment/web/Dockerfile
     container_name: openroad
     volumes:
-      - /usr/share/nginx/html/output:/storage
-      - /home/bill:/home/bill
+      - /usr/share/nginx/html/output:/strg
     depends_on:
       - postgres
     env_file: src/.env
@@ -40,8 +39,7 @@ services:
       dockerfile: ./deployment/celery/Dockerfile
     container_name: celery
     volumes:
-      - /usr/share/nginx/html/output:/storage
-      - /home/bill:/home/bill
+      - /usr/share/nginx/html/output:/strg
     depends_on:
       - postgres
       - broker
