@@ -1,0 +1,51 @@
+version: '3'
+
+volumes:
+  postgres_data: {}
+  broker_data: {}
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: openroad_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file: src/.env
+
+  broker:
+    image: redis
+    volumes:
+      - broker_data:/data
+    container_name: redis_broker
+
+  openroad:
+    build:
+      context: .
+      dockerfile: ./deployment/web/Dockerfile
+    container_name: openroad
+    volumes:
+      - /usr/share/nginx/html/output:/storage
+      - /home/bill:/home/bill
+    depends_on:
+      - postgres
+    env_file: src/.env
+    ports:
+      - "8000:8000"
+    links:
+      - postgres
+
+  celery:
+    build:
+      context: .
+      dockerfile: ./deployment/celery/Dockerfile
+    container_name: celery
+    volumes:
+      - /usr/share/nginx/html/output:/storage
+      - /home/bill:/home/bill
+    depends_on:
+      - postgres
+      - broker
+      - openroad
+    env_file: src/.env
+    links:
+    - postgres
