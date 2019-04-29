@@ -18,18 +18,18 @@ def preprocess(options):
     ls_output_folder = os.path.join(options['output_folder'], 'LS', 'output')
     os.makedirs(ls_output_folder)
 
-    # sym-link design files
+    # copy design files
     for design_file in options['design_files']:
         dst = os.path.join(ls_input_folder, design_file.split('/')[-1])
-        os.symlink(design_file, dst)
+        shutil.copyfile(design_file, dst)
     
     # sym-link library
     for library_file in options['library_files']:
         dst = os.path.join(library_folder, library_file.split('/')[-1])
-        os.symlink(library_file, dst)
+        shutil.copyfile(library_file, dst)
     
     # sym-link constraint file
     dst = os.path.join(ls_input_folder, options['constraints_file'].split('/')[-1])
-    os.symlink(options['constraints_file'], dst)
+    shutil.copyfile(options['constraints_file'], dst)
 
     
