@@ -4,20 +4,21 @@ version: '0.1-alpha'
 output_folder: test_flow
 
 # the name of the design
-design_name: riscv
+design_name: test
 
 # absolute path to the design files
 design_files: 
-  - log2.v
-
-# name of top verilog modules
-top_level_module: log2
-
-# absolute path to the constraints file
-constraints_file: constr.sdc
+  - /absolute/path/to/test.v
 
 # absolute path to the library file
-library: asap7.lib
+library_files: 
+  - /absolute/path/to/mylib.lib
+
+# name of top-level verilog modules
+top_level_module: test
+
+# absolute path to the constraints file
+constraints_file: /absolute/path/to/constr.sdc
 
 # flow definition
 flow:
@@ -28,5 +29,5 @@ stages:
   logic_synthesis:
     tool: yosys
     params:
-      - p1: false
-      - p2: 12
+      - buffering: true
+      - optimize: false
