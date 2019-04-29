@@ -9,7 +9,7 @@ OpenROAD flow runner is a Docker-based flow runner that orchestrates the RTL-to-
 ### How to run
 1. Create a virtual environment `python3 -m venv env`
 2. Activate virtual environment `source env/bin/activate`
-3. Install dependencies `pip install -r requirements`
+3. Install dependencies `pip install -r requirements.txt`
 4. Modify `openroad-flow.yml` file with your input
 5. Run `python cli.py openroad-flow.yml`
 
