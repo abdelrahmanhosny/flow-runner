@@ -113,4 +113,5 @@ venv.bak/
 .mypy_cache/
 
 # project-specific
-openroad-flow.yml
+openroad_flow.yml
+test_flow
