@@ -1,3 +1,5 @@
 from django.db import models
 
-# Create your models here.
+# DO NOT CREATE ANY MODELS
+# IF YOU DO, THAT MEAN THIS RUNNER IS STATEFUL
+# BY DESIGN, WE WANT THIS RUNNER TO BE STATELESS
