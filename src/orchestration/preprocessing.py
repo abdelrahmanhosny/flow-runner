@@ -23,12 +23,12 @@ def preprocess(options):
         dst = os.path.join(ls_input_folder, design_file.split('/')[-1])
         shutil.copyfile(design_file, dst)
     
-    # sym-link library
+    # copy library
     for library_file in options['library_files']:
         dst = os.path.join(library_folder, library_file.split('/')[-1])
         shutil.copyfile(library_file, dst)
     
-    # sym-link constraint file
+    # copy constraint file
     dst = os.path.join(ls_input_folder, options['constraints_file'].split('/')[-1])
     shutil.copyfile(options['constraints_file'], dst)
 

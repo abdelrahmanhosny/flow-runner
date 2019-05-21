@@ -33,43 +33,18 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=['localhost'])
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
     'rest_framework',
     'runner'
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'flow.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [str(APPS_DIR.path('templates'))],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
 
 WSGI_APPLICATION = 'flow.wsgi.application'
 
@@ -123,23 +98,8 @@ USE_L10N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
-
-# STATIC_ROOT = env.str("DJANGO_STATIC_ROOT", default=str(APPS_DIR.path('assets')))
-STATIC_URL = env.str("DJANGO_STATIC_URL", default='/static/')
-STATICFILES_DIRS = (os.path.join(str(APPS_DIR), "assets"), )
-
-
 # Design path on the file system
-STORAGE_DIR = env.str("STORAGE_DIR", default=str(APPS_DIR.path('storage')))
-FLOW_TEMPLATE_DIR = env.str("FLOW_TEMPLATE_DIR", default=str(APPS_DIR.path('flow.sample')))
-REPOS_TMP_DIR = env.str("REPOS_TMP_DIR", default=str(APPS_DIR.path('repos_tmp')))
-
-
-# Storage Web URL
-STORAGE_URL = env.str("STORAGE_URL", default='http://localhost')
+PLAYGROUND_DIR = env.str("PLAYGROUND_DIR", default=str(APPS_DIR.path('playground')))
 
 # OpenROAD URL
 OPENROAD_URL = env.str("OPENROAD_URL", default='http://localhost')
