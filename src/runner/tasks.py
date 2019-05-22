@@ -15,10 +15,10 @@ from git import Repo
 logger = get_task_logger(__name__)
 
 
-def notify_started(flow_id):
+def notify_started(flow_id, storage_url='#'):
     r = requests.post(settings.OPENROAD_URL + '/start',
                       data={'flow_uuid': flow_id,
-                            'storage_url': settings.STORAGE_URL + str(flow_id) + '/openroad',
+                            'storage_url': storage_url + str(flow_id) + '/openroad',
                             'live_monitoring_url': settings.LIVE_MONITORING_URL})
     logger.info('Notified OpenROAD of flow ' + flow_id + ' start ..')
     logger.info('OpenROAD responded ' + r.text)
