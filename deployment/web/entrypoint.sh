@@ -12,7 +12,7 @@ try:
     env = environ.Env()
     if env.bool('READ_ENVFILE', default=True):
         env.read_env(ENV_PATH)
-    conn = psycopg2.connect(dbname=env('POSTGRES_DB', default=''), user=env('POSTGRES_USER', default=''), password=env('POSTGRES_PASSWORD', default=''), host=env('POSTGRES_HOSY', default='postgres'))
+    conn = psycopg2.connect(dbname=env('POSTGRES_DB', default=''), user=env('POSTGRES_USER', default=''), password=env('POSTGRES_PASSWORD', default=''), host=env('POSTGRES_HOST', default='postgres'))
 except psycopg2.OperationalError:
     sys.exit(-1)
 sys.exit(0)
