@@ -115,3 +115,6 @@ CELERY_TIMEZONE = 'America/New_York'
 # Live Monitoring Stuff
 LIVE_MONITORING_URL=env.str("LIVE_MONITORING_URL", default='localhost')
 LIVE_MONITORING_PASSWORD=env.str("LIVE_MONITORING_PASSWORD", default='')
+
+# Storage
+S3_BUCKET_URL=env.str("S3_BUCKET_URL", default='localhost')
