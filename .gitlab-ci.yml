@@ -6,6 +6,8 @@ build:
   stage: build
   before_script:
     - cp /home/openroad/flow_runner.env src/.env
+    - cp -r /home/openroad/tools deployment/celery/
+    - cp -r /home/openroad/lib deployment/celery/
   script:
     - docker-compose build
   only:
@@ -19,6 +21,8 @@ deploy:
   stage: deploy
   before_script:
     - cp /home/openroad/flow_runner.env src/.env
+    - cp -r /home/openroad/tools deployment/celery/
+    - cp -r /home/openroad/lib deployment/celery/
   script:
     - docker-compose up -d
   only:
