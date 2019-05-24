@@ -1,6 +1,10 @@
-FROM python:3.5
+FROM centos/python-36-centos7
 
-ENV PYTHONUNBUFFERED 1
+# Add OpenROAD flow tools
+USER root
+RUN yum install -y tcl libX11-devel libgomp
+COPY deployment/celery/tools /openroad/tools
+COPY deployment/celery/lib /openroad/lib
 
 COPY deployment/requirements.deploy.txt /requirements.txt
 
