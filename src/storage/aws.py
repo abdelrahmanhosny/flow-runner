@@ -8,7 +8,7 @@ def upload_file(file_path, file_key):
     data = open(file_path, 'rb')
     try:
         s3.Bucket('openroad-flow').put_object(Key=file_key, Body=data, ACL='public-read')
-        return settings.S3_BUCKET_URL + file_key
+        return settings.S3_BUCKET_URL + '/' + file_key
     except ClientError as e:
         logging.error(e)
 
