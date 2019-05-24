@@ -95,7 +95,7 @@ def start_flow_task(flow_id, repo_url):
     args = ['./yosys', '-Q', '-T', '-q', '-o', netlist_file, design_files, '/openroad/tools/synth.ys']
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += ''.join(str(line)[-1].replace('\n', '<br>'))
+        logs += str(line)[-1].replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
@@ -127,7 +127,7 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += ''.join(str(line)[-1].replace('\n', '<br>'))
+        logs += str(line)[-1].replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
@@ -137,7 +137,7 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += ''.join(str(line)[-1].replace('\n', '<br>'))
+        logs += str(line)[-1].replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
@@ -179,7 +179,7 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += ''.join(str(line)[-1].replace('\n', '<br>'))
+        logs += str(line)[-1].replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
