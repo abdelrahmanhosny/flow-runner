@@ -76,7 +76,7 @@ def start_flow_task(flow_id, repo_url):
                                                'logs': ''}).run(conn)
 
     # notify openroad with start
-    # notify_started(flow_id)
+    notify_started(flow_id)
 
     # load flow options
     flow_options_file = os.path.join(flow_dir, 'openroad-flow.yml')
