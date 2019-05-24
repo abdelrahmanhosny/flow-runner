@@ -11,3 +11,6 @@ def upload_file(file_path, file_key):
         return settings.S3_BUCKET_URL + file_key
     except ClientError as e:
         logging.error(e)
+
+def get_flow_readme():
+    return 'https://s3.us-east-2.amazonaws.com/openroad-flow/README.txt'

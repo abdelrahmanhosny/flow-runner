@@ -6,34 +6,42 @@ import yaml
 import docker
 import rethinkdb as r
 import time
+import zipfile
 from django.conf import settings
 from celery.decorators import task
 from celery.utils.log import get_task_logger
 from git import Repo
-
+from storage import aws
 
 logger = get_task_logger(__name__)
 
+def zipdir(path, ziph):
+    # ziph is zipfile handle
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            ziph.write(os.path.join(root, file))
 
-def notify_started(flow_id, storage_url='#'):
+def notify_started(flow_id, storage_url=aws.get_flow_readme()):
     r = requests.post(settings.OPENROAD_URL + '/start',
                       data={'flow_uuid': flow_id,
-                            'storage_url': storage_url + str(flow_id) + '/openroad',
+                            'storage_url': storage_url,
                             'live_monitoring_url': settings.LIVE_MONITORING_URL})
     logger.info('Notified OpenROAD of flow ' + flow_id + ' start ..')
     logger.info('OpenROAD responded ' + r.text)
 
 
-def notify_success(flow_id):
-    r = requests.post(settings.OPENROAD_URL + '/success',
-                      data={'flow_uuid': flow_id})
+def notify_success(flow_id, result_url='#'):
+    r = requests.post(settings.OPENROAD_URL + '/success', \
+            data={'flow_uuid': flow_id, \
+                    'storage_url': result_url,})
     logger.info('Notified OpenROAD of flow ' + flow_id + ' success ..')
     logger.info('OpenROAD responded ' + r.text)
 
 
-def notify_fail(flow_id):
-    r = requests.post(settings.OPENROAD_URL + '/fail',
-                      data={'flow_uuid': flow_id})
+def notify_fail(flow_id, result_url='#'):
+    r = requests.post(settings.OPENROAD_URL + '/fail', \
+            data={'flow_uuid': flow_id, \
+                    'storage_url': result_url,})
     logger.info('Notified OpenROAD of flow ' + flow_id + ' fail ..')
     logger.info('OpenROAD responded ' + r.text)
 
@@ -66,7 +74,7 @@ def start_flow_task(flow_id, repo_url):
     r.db('openroad').table('flow_log').insert({'openroad_uuid': flow_id,
                                                'logs': ''}).run(conn)
 
-    # notify openroad with start and give it storage URL
+    # notify openroad with start
     notify_started(flow_id)
 
     # load flow options
@@ -110,10 +118,17 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
 
+    # Zip the flow_dir and store it to AWS
+    flow_result_zipped_file = os.path.join([flow_dir, str(flow_id) + '.zip'])
+    zipf = zipfile.ZipFile(flow_result_zipped_file, 'w', zipfile.ZIP_DEFLATED)
+    zipdir(flow_dir, zipf)
+    zipf.close()
+    result_url = aws.upload_file(flow_result_zipped_file, str(flow_id))
+
     # close connection to the live monitoring db
     conn.close()
 
     # notify openroad with completion (success/failure)
-    notify_success(flow_id)
+    notify_success(flow_id, result_url)
 
     return True
