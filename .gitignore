@@ -113,5 +113,5 @@ venv.bak/
 .mypy_cache/
 
 # project-specific
-openroad_flow.yml
-test_flow
+deployment/celery/tools
+deployment/celery/lib
