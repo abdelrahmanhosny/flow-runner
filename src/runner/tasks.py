@@ -119,11 +119,11 @@ def start_flow_task(flow_id, repo_url):
             update({'logs': logs}).run(conn)
 
     # Zip the flow_dir and store it to AWS
-    flow_result_zipped_file = os.path.join(settings.PLAYGROUND_DIR, str(flow_id) + '.zip')
+    flow_result_zipped_file = str(flow_id) + '.zip'
     zipf = zipfile.ZipFile(flow_result_zipped_file, 'w', zipfile.ZIP_DEFLATED)
     zipdir(flow_dir, zipf)
     zipf.close()
-    result_url = aws.upload_file(flow_result_zipped_file, str(flow_id))
+    result_url = aws.upload_file(flow_result_zipped_file, str(flow_id) + '.zip')
 
     # close connection to the live monitoring db
     conn.close()
