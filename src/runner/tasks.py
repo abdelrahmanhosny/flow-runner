@@ -104,6 +104,9 @@ def start_flow_task(flow_id, repo_url):
             r.db('openroad').table('flow_log').\
                 filter(r.row['openroad_uuid'] == flow_id).\
                     update({'logs': logs}).run(conn)
+    r.db('openroad').table('flow_log').\
+                filter(r.row['openroad_uuid'] == flow_id).\
+                    update({'logs': logs}).run(conn)
 
     logs += '<br><br>Logic synthesis completed successfully ..<br><br>'
     r.db('openroad').table('flow_log').\
@@ -116,8 +119,54 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
     
-    time.sleep(10)
-    logs += 'Floor Planning completed successfully ..<br>'
+    netlist_def_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.def')
+    args = ['./defgenerator', '-lef', '/openroad/lib/asap7_tech_4x_170803.lef']
+    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_L_4x_170912_mod.lef']
+    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_R_4x_170912_mod.lef']
+    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_SL_4x_170912_mod.lef']
+    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_SRAM_4x_170912_mod.lef']
+    args += ['-lib', '/openroad/lib/asab7.lib']
+    args += ['-verilog', netlist_file]
+    args += ['-defDbu', options['stages']['floor_planning']['params']['defDbu']]
+    args += ['-dieAreaInMicron'] + options['stages']['floor_planning']['params']['dieAreaInMicron'].strip().split(' ')
+    args += ['-siteName', options['stages']['floor_planning']['params']['siteName']]
+    args += ['-design', options['top_level_module']]
+    args += ['-def', netlist_def_file]
+
+    p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
+    lines = []
+    for line in iter(p.stdout.readline, b''):
+        lines.append(str(line)[-1].replace('\n', '<br>'))
+        if len(lines == 10):
+            logs += ''.join(lines)
+            print('\n'.join(lines))
+            lines = []
+            r.db('openroad').table('flow_log').\
+                filter(r.row['openroad_uuid'] == flow_id).\
+                    update({'logs': logs}).run(conn)
+    r.db('openroad').table('flow_log').\
+                filter(r.row['openroad_uuid'] == flow_id).\
+                    update({'logs': logs}).run(conn)
+    
+    def_pins_placed_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist-floor-planned.def')
+    args = ['python', 'pins_placer.py', netlist_def_file, '-output', def_pins_placed_file]
+
+    p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
+    lines = []
+    for line in iter(p.stdout.readline, b''):
+        lines.append(str(line)[-1].replace('\n', '<br>'))
+        if len(lines == 10):
+            logs += ''.join(lines)
+            print('\n'.join(lines))
+            lines = []
+            r.db('openroad').table('flow_log').\
+                filter(r.row['openroad_uuid'] == flow_id).\
+                    update({'logs': logs}).run(conn)
+    r.db('openroad').table('flow_log').\
+                filter(r.row['openroad_uuid'] == flow_id).\
+                    update({'logs': logs}).run(conn)
+
+    logs += '<br><br>Floor Planning completed successfully ..<br><br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
@@ -128,7 +177,7 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
     
-    time.sleep(10)
+    time.sleep(5)
     logs += 'Placement completed successfully ..<br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
