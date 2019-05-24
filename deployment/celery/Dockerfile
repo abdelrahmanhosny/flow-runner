@@ -3,17 +3,16 @@ FROM centos/python-36-centos7
 # Add OpenROAD flow tools
 USER root
 RUN yum install -y tcl libX11-devel libgomp
-COPY deployment/celery/tools /openroad/tools
-COPY deployment/celery/lib /openroad/lib
 
 COPY deployment/requirements.deploy.txt /requirements.txt
-
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r /requirements.txt
 
+COPY deployment/celery/tools /openroad/tools/
+COPY deployment/celery/lib /openroad/lib/
 COPY src /src/
-COPY deployment/celery/entrypoint.sh entrypoint.sh
-RUN chmod +x entrypoint.sh
+COPY deployment/celery/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 WORKDIR /src
 

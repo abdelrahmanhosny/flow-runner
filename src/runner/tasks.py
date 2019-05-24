@@ -51,12 +51,12 @@ def start_flow_task(flow_id, repo_url):
     logger.info('Starting flow now ..')
 
     # initialize design directory
+    flow_dir = os.path.join(settings.PLAYGROUND_DIR, str(flow_id))
+    flow_result_directory = os.path.join(flow_dir, 'flow_output')
     try:
-        flow_dir = os.path.join(settings.PLAYGROUND_DIR, str(flow_id))
         shutil.rmtree(flow_dir, ignore_errors=True)
         logger.info('Initialized flow directory ..')
     except Exception as e:
-        # notify_fail(flow_id)
         logger.info(e)
         return
 
@@ -64,6 +64,7 @@ def start_flow_task(flow_id, repo_url):
     try:
         Repo.clone_from(repo_url, flow_dir)
         logger.info('Cloned the repo from GitHub..')
+        os.mkdir(flow_result_directory)
     except Exception as e:
         # notify_fail(flow_id)
         logger.info(e)
@@ -75,21 +76,36 @@ def start_flow_task(flow_id, repo_url):
                                                'logs': ''}).run(conn)
 
     # notify openroad with start
-    notify_started(flow_id)
+    # notify_started(flow_id)
 
     # load flow options
     flow_options_file = os.path.join(flow_dir, 'openroad-flow.yml')
-    options = yaml.load(flow_options_file, Loader=yaml.FullLoader)
+    with open(flow_options_file, 'r') as stream:
+        options = yaml.safe_load(stream)
 
     logs = ''
     ######## Logic Synthesis #########
     logs += 'Started Logic Synthesis using Yosys ..<br>'
     r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
-    
-    time.sleep(10)
-    logs += 'Logic synthesis completed successfully ..<br>'
+		filter(r.row['openroad_uuid'] == flow_id).\
+			update({'logs': logs}).run(conn)
+			
+    netlist_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.v')
+    design_files = os.path.join(flow_dir, 'design/*.v')
+    args = ['./yosys', '-Q', '-T', '-q', '-o', netlist_file, design_files, '/openroad/tools/synth.ys']
+    p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
+    lines = []
+    for line in iter(p.stdout.readline, b''):
+        lines.append(str(line)[-1].replace('\n', '<br>'))
+        if len(lines == 10):
+            logs += ''.join(lines)
+            print('\n'.join(lines))
+            lines = []
+            r.db('openroad').table('flow_log').\
+                filter(r.row['openroad_uuid'] == flow_id).\
+                    update({'logs': logs}).run(conn)
+
+    logs += '<br><br>Logic synthesis completed successfully ..<br><br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
