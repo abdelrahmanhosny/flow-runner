@@ -88,7 +88,7 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
     
-    time.sleep(30)
+    time.sleep(10)
     logs += 'Logic synthesis completed successfully ..<br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
@@ -100,7 +100,7 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
     
-    time.sleep(30)
+    time.sleep(10)
     logs += 'Floor Planning completed successfully ..<br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
@@ -112,14 +112,14 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
     
-    time.sleep(30)
+    time.sleep(10)
     logs += 'Placement completed successfully ..<br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
 
     # Zip the flow_dir and store it to AWS
-    flow_result_zipped_file = os.path.join([flow_dir, str(flow_id) + '.zip'])
+    flow_result_zipped_file = os.path.join(settings.PLAYGROUND_DIR, str(flow_id) + '.zip')
     zipf = zipfile.ZipFile(flow_result_zipped_file, 'w', zipfile.ZIP_DEFLATED)
     zipdir(flow_dir, zipf)
     zipf.close()
