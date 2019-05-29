@@ -95,7 +95,7 @@ def start_flow_task(flow_id, repo_url):
     args = ['./yosys', '-Q', '-T', '-q', '-o', netlist_file, design_files, '/openroad/tools/synth.ys']
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line)[-1].replace('\n', '<br>')
+        logs += str(line).replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
@@ -127,7 +127,7 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line)[-1].replace('\n', '<br>')
+        logs += str(line).replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
@@ -137,7 +137,7 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line)[-1].replace('\n', '<br>')
+        logs += str(line).replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
@@ -153,7 +153,7 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
     
-    constraint_file = os.path.join(flow_dir, options['sdc_file'])
+    constraint_file = os.path.join(flow_dir, 'design', options['sdc_file'])
     output_dir = os.path.join(flow_result_directory, 'placement')
     args = ['./RePlAce', '-bmflag', options['stages']['placement']['params']['bmflag']]
     args += ['-lef', '/openroad/lib/asap7_tech_4x_170803.lef']
@@ -179,12 +179,46 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line)[-1].replace('\n', '<br>')
+        logs += str(line).replace('\n', '<br>')
         r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
                 update({'logs': logs}).run(conn)
 
     logs += 'Placement completed successfully ..<br>'
+    r.db('openroad').table('flow_log').\
+            filter(r.row['openroad_uuid'] == flow_id).\
+            update({'logs': logs}).run(conn)
+
+    ######## Placement #########
+    logs += 'Started Static Timing Analysis using OpenSTA ..<br>'
+    r.db('openroad').table('flow_log').\
+            filter(r.row['openroad_uuid'] == flow_id).\
+            update({'logs': logs}).run(conn)
+
+    os.mkdir(os.path.join(flow_result_directory, 'sta'))
+    sta_report_file = os.path.join(flow_result_directory, 'sta', 'report.txt')
+    sta_script_file = os.path.join(flow_result_directory, 'sta', 'sta.src')
+    spef_file = os.path.join(flow_result_directory, 'placement', 'etc', options['design_name'] + '-netlist-floor-planned', \
+        'experiment000', options['design_name'] + '-netlist-floor-planned_dp.spef')
+    with open(sta_script_file, 'w') as f:
+        f.write('read_liberty /openroad/lib/asap7.lib\n')
+        f.write('read_verilog ' + netlist_file + '\n')
+        f.write('link_design ' + options['top_level_module'] + '\n')
+        f.write('set_units -time ps\n')
+        f.write('read_sdc ' + constraint_file + '\n')
+        f.write('read_spef ' + spef_file + '\n')
+        f.write('report_checks > ' + sta_report_file + '\n')
+        f.write('exit')
+    
+    args = ['./sta', '-f', sta_script_file]
+    p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
+    for line in iter(p.stdout.readline, b''):
+        logs += str(line).replace('\n', '<br>')
+        r.db('openroad').table('flow_log').\
+            filter(r.row['openroad_uuid'] == flow_id).\
+                update({'logs': logs}).run(conn)
+
+    logs += 'Static Timing Analysis completed successfully ..<br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
