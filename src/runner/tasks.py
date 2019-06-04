@@ -4,7 +4,6 @@ import os
 import subprocess
 import yaml
 import docker
-import rethinkdb as r
 import time
 import zipfile
 from django.conf import settings
@@ -12,6 +11,7 @@ from celery.decorators import task
 from celery.utils.log import get_task_logger
 from git import Repo
 from storage import aws
+from live_monitor import LiveMonitor
 
 logger = get_task_logger(__name__)
 
@@ -29,14 +29,12 @@ def notify_started(flow_id, storage_url=aws.get_flow_readme()):
     logger.info('Notified OpenROAD of flow ' + flow_id + ' start ..')
     logger.info('OpenROAD responded ' + r.text)
 
-
 def notify_success(flow_id, result_url='#'):
     r = requests.post(settings.OPENROAD_URL + '/success', \
             data={'flow_uuid': flow_id, \
                     'storage_url': result_url,})
     logger.info('Notified OpenROAD of flow ' + flow_id + ' success ..')
     logger.info('OpenROAD responded ' + r.text)
-
 
 def notify_fail(flow_id, result_url='#'):
     r = requests.post(settings.OPENROAD_URL + '/fail', \
@@ -71,9 +69,7 @@ def start_flow_task(flow_id, repo_url):
         return
 
     # initialize live monitoring on the remote rethinkdb
-    conn = r.connect(settings.LIVE_MONITORING_URL, password=settings.LIVE_MONITORING_PASSWORD)
-    r.db('openroad').table('flow_log').insert({'openroad_uuid': flow_id,
-                                               'logs': ''}).run(conn)
+    live_monitor = LiveMonitor(flow_id)
 
     # notify openroad with start
     notify_started(flow_id)
@@ -83,33 +79,24 @@ def start_flow_task(flow_id, repo_url):
     with open(flow_options_file, 'r') as stream:
         options = yaml.safe_load(stream)
 
-    logs = ''
     ######## Logic Synthesis #########
-    logs += 'Started Logic Synthesis using Yosys ..<br>'
-    r.db('openroad').table('flow_log').\
-		filter(r.row['openroad_uuid'] == flow_id).\
-			update({'logs': logs}).run(conn)
+    logs = 'Started Logic Synthesis using Yosys ..<br>'
+    live_monitor.append(logs)
 			
     netlist_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.v')
     design_files = os.path.join(flow_dir, 'design/*.v')
     args = ['./yosys', '-Q', '-T', '-q', '-o', netlist_file, design_files, '/openroad/tools/synth.ys']
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line).replace('\n', '<br>')
-        r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-                update({'logs': logs}).run(conn)
+        logs = str(line).replace('\n', '<br>')
+        live_monitor.append(logs)
 
-    logs += '<br><br>Logic synthesis completed successfully ..<br><br>'
-    r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
+    logs = '<br><br>Logic synthesis completed successfully ..<br><br>'
+    live_monitor.append(logs)
     
     ######## Floor Planning #########
-    logs += 'Started Floor Planning ..<br>'
-    r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
+    logs = 'Started Floor Planning ..<br>'
+    live_monitor.append(logs)
     
     netlist_def_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.def')
     args = ['./defgenerator', '-lef', '/openroad/lib/asap7_tech_4x_170803.lef']
@@ -127,31 +114,23 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line).replace('\n', '<br>')
-        r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-                update({'logs': logs}).run(conn)
+        logs = str(line).replace('\n', '<br>')
+        live_monitor.append(logs)
     
     def_pins_placed_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist-floor-planned.def')
     args = ['python', 'pins_placer.py', '-def', netlist_def_file, '-output', def_pins_placed_file]
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line).replace('\n', '<br>')
-        r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-                update({'logs': logs}).run(conn)
+        logs = str(line).replace('\n', '<br>')
+        live_monitor.append(logs)
 
-    logs += '<br><br>Floor Planning completed successfully ..<br><br>'
-    r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
-    
+    logs = '<br><br>Floor Planning completed successfully ..<br><br>'
+    live_monitor.append(logs)
+
     ######## Placement #########
-    logs += 'Started Placement using RePlAce ..<br>'
-    r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
+    logs = 'Started Placement using RePlAce ..<br>'
+    live_monitor.append(logs)
     
     constraint_file = os.path.join(flow_dir, 'design', options['sdc_file'])
     output_dir = os.path.join(flow_result_directory, 'placement')
@@ -179,24 +158,18 @@ def start_flow_task(flow_id, repo_url):
 
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line).replace('\n', '<br>')
-        r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-                update({'logs': logs}).run(conn)
+        logs = str(line).replace('\n', '<br>')
+        live_monitor.append(logs)
 
-    logs += 'Placement completed successfully ..<br>'
-    r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
+    logs = 'Placement completed successfully ..<br>'
+    live_monitor.append(logs)
 
     ######## Routing #########
     # utdBoxRouter -do ispd01.gdo ispd01
     
     ######## STA #########
-    logs += 'Started Static Timing Analysis using OpenSTA ..<br>'
-    r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
+    logs = 'Started Static Timing Analysis using OpenSTA ..<br>'
+    live_monitor.append(logs)
 
     os.mkdir(os.path.join(flow_result_directory, 'sta'))
     sta_report_file = os.path.join(flow_result_directory, 'sta', 'report.txt')
@@ -216,15 +189,11 @@ def start_flow_task(flow_id, repo_url):
     args = ['./sta', '-f', sta_script_file]
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
     for line in iter(p.stdout.readline, b''):
-        logs += str(line).replace('\n', '<br>')
-        r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-                update({'logs': logs}).run(conn)
+        logs = str(line).replace('\n', '<br>')
+        live_monitor.append(logs)
 
-    logs += 'Static Timing Analysis completed successfully ..<br>'
-    r.db('openroad').table('flow_log').\
-            filter(r.row['openroad_uuid'] == flow_id).\
-            update({'logs': logs}).run(conn)
+    logs = 'Static Timing Analysis completed successfully ..<br>'
+    live_monitor.append(logs)
 
     # Zip the flow_dir and store it to AWS
     flow_result_zipped_file = str(flow_id) + '.zip'
@@ -234,7 +203,7 @@ def start_flow_task(flow_id, repo_url):
     result_url = aws.upload_file(flow_result_zipped_file, str(flow_id) + '.zip')
 
     # close connection to the live monitoring db
-    conn.close()
+    live_monitor.close()
 
     # notify openroad with completion (success/failure)
     notify_success(flow_id, result_url)
