@@ -6,6 +6,7 @@ import yaml
 import docker
 import time
 import zipfile
+import steps
 from django.conf import settings
 from celery.decorators import task
 from celery.utils.log import get_task_logger
@@ -80,19 +81,11 @@ def start_flow_task(flow_id, repo_url):
         options = yaml.safe_load(stream)
 
     ######## Logic Synthesis #########
-    logs = 'Started Logic Synthesis using Yosys ..<br>'
-    live_monitor.append(logs)
-			
     netlist_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.v')
     design_files = os.path.join(flow_dir, 'design/*.v')
-    args = ['./yosys', '-Q', '-T', '-q', '-o', netlist_file, design_files, '/openroad/tools/synth.ys']
-    p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
-    for line in iter(p.stdout.readline, b''):
-        logs = str(line).replace('\n', '<br>')
-        live_monitor.append(logs)
 
-    logs = '<br><br>Logic synthesis completed successfully ..<br><br>'
-    live_monitor.append(logs)
+    steps.run_yosys(live_monitor, options, design_files, netlist_file)
+    
     
     ######## Floor Planning #########
     logs = 'Started Floor Planning ..<br>'
