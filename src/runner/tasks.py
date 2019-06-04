@@ -6,12 +6,12 @@ import yaml
 import docker
 import time
 import zipfile
-import steps
 from django.conf import settings
 from celery.decorators import task
 from celery.utils.log import get_task_logger
 from git import Repo
 from storage import aws
+from .steps import run_yosys
 from .live_monitor import LiveMonitor
 
 logger = get_task_logger(__name__)
@@ -84,7 +84,7 @@ def start_flow_task(flow_id, repo_url):
     netlist_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.v')
     design_files = os.path.join(flow_dir, 'design/*.v')
 
-    steps.run_yosys(live_monitor, options, design_files, netlist_file)
+    run_yosys(live_monitor, options, design_files, netlist_file)
     
     
     ######## Floor Planning #########
