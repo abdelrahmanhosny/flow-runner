@@ -189,7 +189,10 @@ def start_flow_task(flow_id, repo_url):
             filter(r.row['openroad_uuid'] == flow_id).\
             update({'logs': logs}).run(conn)
 
-    ######## Placement #########
+    ######## Routing #########
+    # utdBoxRouter -do ispd01.gdo ispd01
+    
+    ######## STA #########
     logs += 'Started Static Timing Analysis using OpenSTA ..<br>'
     r.db('openroad').table('flow_log').\
             filter(r.row['openroad_uuid'] == flow_id).\
