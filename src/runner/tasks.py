@@ -13,6 +13,8 @@ from git import Repo
 from storage import aws
 from .steps.logic_synthesis import run_yosys
 from .steps.floor_planning import run_floor_planner
+from .steps.placement import run_replace
+from .steps.static_timing_analysis import run_opensta
 from .live_monitor import LiveMonitor
 
 logger = get_task_logger(__name__)
@@ -87,7 +89,6 @@ def start_flow_task(flow_id, repo_url):
 
     run_yosys(live_monitor, options, design_files, netlist_file)
     
-    
     ######## Floor Planning #########
     netlist_def_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.def')
     def_pins_placed_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist-floor-planned.def')
@@ -95,71 +96,22 @@ def start_flow_task(flow_id, repo_url):
     run_floor_planner(live_monitor, options, netlist_file, netlist_def_file, def_pins_placed_file)
 
     ######## Placement #########
-    logs = 'Started Placement using RePlAce ..<br>'
-    live_monitor.append(logs)
-    
     constraint_file = os.path.join(flow_dir, 'design', options['sdc_file'])
     output_dir = os.path.join(flow_result_directory, 'placement')
-    args = ['./RePlAce', '-bmflag', options['stages']['placement']['params']['bmflag']]
-    args += ['-lef', '/openroad/lib/asap7_tech_4x_170803.lef']
-    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_L_4x_170912_mod.lef']
-    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_R_4x_170912_mod.lef']
-    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_SL_4x_170912_mod.lef']
-    args += ['-lef', '/openroad/lib/asap7sc7p5t_24_SRAM_4x_170912_mod.lef']
-    args += ['-def', def_pins_placed_file]
-    args += ['-verilog', netlist_file]
-    args += ['-lib', '/openroad/lib/asap7.lib']
-    args += ['-sdc', constraint_file]
-    args += ['-output', output_dir]
-    args += ['-t', str(options['stages']['placement']['params']['t'])]
-    args += ['-dpflag', options['stages']['placement']['params']['dpflag']]
-    args += ['-dploc', '/openroad/tools/ntuplace3']
-    if options['stages']['placement']['params']['onlyDP']:
-        args += ['-onlyDP']
-    args += ['-unitY', str(options['stages']['placement']['params']['unitY'])]
-    args += ['-resPerMicron', str(options['stages']['placement']['params']['resPerMicron'])]
-    args += ['-capPerMicron', str(options['stages']['placement']['params']['capPerMicron'])]
-    if options['stages']['placement']['params']['timing']:
-        args += ['-timing']
 
-    p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
-    for line in iter(p.stdout.readline, b''):
-        logs = str(line).replace('\n', '<br>')
-        live_monitor.append(logs)
-
-    logs = 'Placement completed successfully ..<br>'
-    live_monitor.append(logs)
+    run_replace(live_monitor, options, def_pins_placed_file ,netlist_file, constraint_file, output_dir)
 
     ######## Routing #########
     # utdBoxRouter -do ispd01.gdo ispd01
     
     ######## STA #########
-    logs = 'Started Static Timing Analysis using OpenSTA ..<br>'
-    live_monitor.append(logs)
-
     os.mkdir(os.path.join(flow_result_directory, 'sta'))
     sta_report_file = os.path.join(flow_result_directory, 'sta', 'report.txt')
     sta_script_file = os.path.join(flow_result_directory, 'sta', 'sta.src')
     spef_file = os.path.join(flow_result_directory, 'placement', 'etc', options['design_name'] + '-netlist-floor-planned', \
         'experiment000', options['design_name'] + '-netlist-floor-planned_dp.spef')
-    with open(sta_script_file, 'w') as f:
-        f.write('read_liberty /openroad/lib/asap7.lib\n')
-        f.write('read_verilog ' + netlist_file + '\n')
-        f.write('link_design ' + options['top_level_module'] + '\n')
-        f.write('set_units -time ps\n')
-        f.write('read_sdc ' + constraint_file + '\n')
-        f.write('read_spef ' + spef_file + '\n')
-        f.write('report_checks > ' + sta_report_file + '\n')
-        f.write('exit')
     
-    args = ['./sta', '-f', sta_script_file]
-    p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE)
-    for line in iter(p.stdout.readline, b''):
-        logs = str(line).replace('\n', '<br>')
-        live_monitor.append(logs)
-
-    logs = 'Static Timing Analysis completed successfully ..<br>'
-    live_monitor.append(logs)
+    run_opensta(live_monitor, options, sta_script_file, netlist_file, constraint_file, spef_file, sta_report_file)
 
     # Zip the flow_dir and store it to AWS
     flow_result_zipped_file = str(flow_id) + '.zip'
