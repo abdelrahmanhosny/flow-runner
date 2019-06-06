@@ -1,26 +1,19 @@
 # OpenROAD Flow Runner
-OpenROAD flow runner is a Docker-based flow runner that orchestrates the RTL-to-GDS flow. It can be run locally on a machine with Docker installed. The same flow runner is used in our cloud-based infrastructure. 
+OpenROAD flow runner is a Docker-based flow runner that orchestrates the RTL-to-GDS flow. It is used in our cloud-based infrastructure. For more information about the software architecture of the flow, refer to the [documentation](https://docs.theopenroadproject.org)
 
-## Run Locally
-### Prerequisites
-1. Install [Docker](https://docs.docker.com/install/)
-2. Install `python` >= 3.x along with `pip`, the package manager for python
-
-### How to run
+### How to deploy
 1. Create a virtual environment `python3 -m venv env`
 2. Activate virtual environment `source env/bin/activate`
 3. Install dependencies `pip install -r requirements.txt`
-4. Modify `openroad-flow.yml` file with your input
-5. Run `python cli.py openroad-flow.yml`
-
-### Where to find the output
-The output of the flow will be placed in the folder named `output_folder` from the `openroad-flow.yml` file. It is organized in the same sequence the flow is run.
-
-## Run from OpenROAD web app
-Documentation on running the flow from the web app is available at [OpenROAD Cloud Flow](https://github.com/The-OpenROAD-Project/BROWN-flow.theopenroadproject.org)
+4. Copy `src/.env-example` to `src/.env` and modify deployment credentials accordingly.
+5. Build using `docker-compose build`
+6. Run using `docker-compose up`. Use the `-d` option to run as daemon.
 
 ## Help
-Contact abdelrahman+openroad@brown.edu for questions.
+In the issues tab, create a new issue with your question. If you need to send attachments with private IPs, contact us through [https://docs.theopenroadproject.org/#questions-support](https://docs.theopenroadproject.org/#questions-support)
 
 ## License
-© 2018-2019 The OpenROAD Project & contributors.
+BSD 2-Clause License
+
+Copyright (c) 2019, The OpenROAD Project
+All rights reserved.
