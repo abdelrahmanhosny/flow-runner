@@ -1,10 +1,7 @@
 import requests
 import shutil
 import os
-import subprocess
 import yaml
-import docker
-import time
 import zipfile
 from django.conf import settings
 from celery.decorators import task
@@ -15,6 +12,7 @@ from .steps.logic_synthesis import run_yosys
 from .steps.floor_planning import run_floor_planner
 from .steps.placement import run_replace
 from .steps.static_timing_analysis import run_opensta
+from .steps.global_routing import run_utd_box_router
 from .live_monitor import LiveMonitor
 
 logger = get_task_logger(__name__)
@@ -76,7 +74,7 @@ def start_flow_task(flow_id, repo_url):
     live_monitor = LiveMonitor(flow_id)
 
     # notify openroad with start
-    notify_started(flow_id)
+    # notify_started(flow_id)
 
     # load flow options
     flow_options_file = os.path.join(flow_dir, 'openroad-flow.yml')
@@ -102,9 +100,18 @@ def start_flow_task(flow_id, repo_url):
     run_replace(live_monitor, options, def_pins_placed_file ,netlist_file, constraint_file, output_dir)
 
     ######## Routing #########
-    # utdBoxRouter -do ispd01.gdo ispd01
+    logger.info('started routing .......')
+    os.mkdir(os.path.join(flow_result_directory, 'routing'))
+    router_script_file = os.path.join(flow_result_directory, 'routing', 'router.gdo')
+    def_file = os.path.join(flow_result_directory, 'placement', 'etc', options['design_name'] + '-netlist-floor-planned', \
+        'experiment000', options['design_name'] + '-netlist-floor-planned_final.def')
+
+    # run_utd_box_router(live_monitor, options, router_script_file, def_file)
+
+    logger.info('finished routing .......')
     
     ######## STA #########
+    logger.info('started sta .......')
     os.mkdir(os.path.join(flow_result_directory, 'sta'))
     sta_report_file = os.path.join(flow_result_directory, 'sta', 'report.txt')
     sta_script_file = os.path.join(flow_result_directory, 'sta', 'sta.src')
@@ -112,7 +119,9 @@ def start_flow_task(flow_id, repo_url):
         'experiment000', options['design_name'] + '-netlist-floor-planned_dp.spef')
     
     run_opensta(live_monitor, options, sta_script_file, netlist_file, constraint_file, spef_file, sta_report_file)
+    logger.info('finished routing .......')
 
+    return True
     # Zip the flow_dir and store it to AWS
     flow_result_zipped_file = str(flow_id) + '.zip'
     zipf = zipfile.ZipFile(flow_result_zipped_file, 'w', zipfile.ZIP_DEFLATED)
