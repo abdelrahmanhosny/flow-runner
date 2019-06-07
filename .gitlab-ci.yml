@@ -8,6 +8,8 @@ build:
     - cp /home/openroad/flow_runner.env src/.env
     - cp -r /home/openroad/tools deployment/celery/
     - cp -r /home/openroad/lib deployment/celery/
+    - cp -r /home/openroad/share deployment/celery/
+    - cp -r /home/openroad/tcl deployment/celery/
   script:
     - docker-compose build
   only:
@@ -23,6 +25,8 @@ deploy:
     - cp /home/openroad/flow_runner.env src/.env
     - cp -r /home/openroad/tools deployment/celery/
     - cp -r /home/openroad/lib deployment/celery/
+    - cp -r /home/openroad/share deployment/celery/
+    - cp -r /home/openroad/tcl deployment/celery/
   script:
     - docker-compose up -d
   only:
