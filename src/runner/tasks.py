@@ -74,7 +74,7 @@ def start_flow_task(flow_id, repo_url):
     live_monitor = LiveMonitor(flow_id)
 
     # notify openroad with start
-    # notify_started(flow_id)
+    notify_started(flow_id)
 
     # load flow options
     flow_options_file = os.path.join(flow_dir, 'openroad-flow.yml')
@@ -121,7 +121,6 @@ def start_flow_task(flow_id, repo_url):
     run_opensta(live_monitor, options, sta_script_file, netlist_file, constraint_file, spef_file, sta_report_file)
     logger.info('finished routing .......')
 
-    return True
     # Zip the flow_dir and store it to AWS
     flow_result_zipped_file = str(flow_id) + '.zip'
     zipf = zipfile.ZipFile(flow_result_zipped_file, 'w', zipfile.ZIP_DEFLATED)
