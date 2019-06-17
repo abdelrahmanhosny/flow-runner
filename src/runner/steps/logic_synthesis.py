@@ -13,7 +13,7 @@ def run_yosys(live_monitor, options, log_dir, design_files, netlist_file):
     p = subprocess.Popen(args, cwd='/openroad/tools', stdout=subprocess.PIPE, stderr=error_file_handle)
     for line in iter(p.stdout.readline, b''):
         logs = str(line).replace('\n', '<br>')
-        live_monitor.append(logs)
+        # live_monitor.append(logs)
         log_file_handle.write(str(line))
 
     logs = '<br><br>Logic synthesis completed successfully ..<br><br>'
