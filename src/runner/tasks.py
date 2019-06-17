@@ -83,11 +83,12 @@ def start_flow_task(flow_id, repo_url):
 
     ######## Logic Synthesis #########
     output_dir = os.path.join(flow_result_directory, 'logic_synthesis')
+    log_dir = output_dir
     os.mkdir(output_dir)
     netlist_file = os.path.join(output_dir, options['design_name'] + '-netlist.v')
     design_files = os.path.join(flow_dir, 'design/*.v')
 
-    run_yosys(live_monitor, options, design_files, netlist_file)
+    run_yosys(live_monitor, options, log_dir, design_files, netlist_file)
     
     ######## Floor Planning #########
     output_dir = os.path.join(flow_result_directory, 'floor_planning')
@@ -99,6 +100,7 @@ def start_flow_task(flow_id, repo_url):
 
     ######## Placement #########
     output_dir = os.path.join(flow_result_directory, 'placement')
+    log_file = os.path.join(output_dir, 'log.txt')
     constraint_file = os.path.join(flow_dir, 'design', options['sdc_file'])
 
     run_replace(live_monitor, options, def_pins_placed_file ,netlist_file, constraint_file, output_dir)
@@ -115,15 +117,16 @@ def start_flow_task(flow_id, repo_url):
     logger.info('finished routing .......')
     
     ######## STA #########
-    logger.info('started sta .......')
-    os.mkdir(os.path.join(flow_result_directory, 'sta'))
+    logger.info('started STA .......')
+    output_dir = os.path.join(flow_result_directory, 'sta')
+    os.mkdir(output_dir)
     sta_report_file = os.path.join(flow_result_directory, 'sta', 'report.txt')
     sta_script_file = os.path.join(flow_result_directory, 'sta', 'sta.src')
     spef_file = os.path.join(flow_result_directory, 'placement', 'etc', options['design_name'] + '-netlist-floor-planned', \
         'experiment000', options['design_name'] + '-netlist-floor-planned_dp.spef')
     
     run_opensta(live_monitor, options, sta_script_file, netlist_file, constraint_file, spef_file, sta_report_file)
-    logger.info('finished routing .......')
+    logger.info('finished STA .......')
 
     # Zip the flow_dir and store it to AWS
     flow_result_zipped_file = str(flow_id) + '.zip'
