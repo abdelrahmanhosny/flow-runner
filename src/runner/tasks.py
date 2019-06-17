@@ -82,20 +82,24 @@ def start_flow_task(flow_id, repo_url):
         options = yaml.safe_load(stream)
 
     ######## Logic Synthesis #########
-    netlist_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.v')
+    output_dir = os.path.join(flow_result_directory, 'logic_synthesis')
+    os.mkdir(output_dir)
+    netlist_file = os.path.join(output_dir, options['design_name'] + '-netlist.v')
     design_files = os.path.join(flow_dir, 'design/*.v')
 
     run_yosys(live_monitor, options, design_files, netlist_file)
     
     ######## Floor Planning #########
-    netlist_def_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist.def')
-    def_pins_placed_file = os.path.join(flow_result_directory, options['design_name'] + '-netlist-floor-planned.def')
+    output_dir = os.path.join(flow_result_directory, 'floor_planning')
+    os.mkdir(output_dir)
+    netlist_def_file = os.path.join(output_dir, options['design_name'] + '-netlist.def')
+    def_pins_placed_file = os.path.join(output_dir, options['design_name'] + '-netlist-floor-planned.def')
 
     run_floor_planner(live_monitor, options, netlist_file, netlist_def_file, def_pins_placed_file)
 
     ######## Placement #########
-    constraint_file = os.path.join(flow_dir, 'design', options['sdc_file'])
     output_dir = os.path.join(flow_result_directory, 'placement')
+    constraint_file = os.path.join(flow_dir, 'design', options['sdc_file'])
 
     run_replace(live_monitor, options, def_pins_placed_file ,netlist_file, constraint_file, output_dir)
 
