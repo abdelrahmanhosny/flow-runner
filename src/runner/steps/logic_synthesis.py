@@ -5,7 +5,7 @@ def run_yosys(live_monitor, options, log_dir, design_files, netlist_file):
     logs = 'Started Logic Synthesis using Yosys ..<br>'
     live_monitor.append(logs)		
     
-    args = ['./yosys', '-Q', '-T', '-q', '-o', netlist_file, design_files, '/openroad/tools/synth.ys']
+    args = ['./yosys', '-Q', '-T', '-o', netlist_file, design_files, '/openroad/tools/synth.ys']
     log_file = os.path.join(log_dir, 'log.txt')
     log_file_handle = open(log_file, 'w')
     error_file = os.path.join(log_dir, 'error.txt')
