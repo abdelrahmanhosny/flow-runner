@@ -8,11 +8,7 @@ from celery.decorators import task
 from celery.utils.log import get_task_logger
 from git import Repo
 from storage import aws
-from .steps.logic_synthesis import run_yosys
-from .steps.floor_planning import run_floor_planner
-from .steps.placement import run_replace
-from .steps.static_timing_analysis import run_opensta
-from .steps.global_routing import run_utd_box_router
+from .steps.alpha_release import run_alpha_release
 from .live_monitor import LiveMonitor
 
 logger = get_task_logger(__name__)
@@ -65,6 +61,7 @@ def start_flow_task(flow_id, repo_url):
         Repo.clone_from(repo_url, flow_dir)
         logger.info('Cloned the repo from GitHub..')
         os.mkdir(flow_result_directory)
+        os.mkdir(os.path.join(flow_result_directory, 'logs'))
     except Exception as e:
         # notify_fail(flow_id)
         logger.info(e)
@@ -81,57 +78,14 @@ def start_flow_task(flow_id, repo_url):
     with open(flow_options_file, 'r') as stream:
         options = yaml.safe_load(stream)
 
-    ######## Logic Synthesis #########
-    output_dir = os.path.join(flow_result_directory, 'logic_synthesis')
-    log_dir = output_dir
-    os.mkdir(output_dir)
-    netlist_file = os.path.join(output_dir, options['design_name'] + '-netlist.v')
-    design_files = os.path.join(flow_dir, 'design/*.v')
-
-    run_yosys(live_monitor, options, log_dir, design_files, netlist_file)
-    
-    ######## Floor Planning #########
-    output_dir = os.path.join(flow_result_directory, 'floor_planning')
-    os.mkdir(output_dir)
-    netlist_def_file = os.path.join(output_dir, options['design_name'] + '-netlist.def')
-    def_pins_placed_file = os.path.join(output_dir, options['design_name'] + '-netlist-floor-planned.def')
-
-    run_floor_planner(live_monitor, options, netlist_file, netlist_def_file, def_pins_placed_file)
-
-    ######## Placement #########
-    output_dir = os.path.join(flow_result_directory, 'placement')
-    log_file = os.path.join(output_dir, 'log.txt')
-    constraint_file = os.path.join(flow_dir, 'design', options['sdc_file'])
-
-    run_replace(live_monitor, options, def_pins_placed_file ,netlist_file, constraint_file, output_dir)
-
-    ######## Routing #########
-    logger.info('started routing .......')
-    os.mkdir(os.path.join(flow_result_directory, 'routing'))
-    router_script_file = os.path.join(flow_result_directory, 'routing', 'router.gdo')
-    def_file = os.path.join(flow_result_directory, 'placement', 'etc', options['design_name'] + '-netlist-floor-planned', \
-        'experiment000', options['design_name'] + '-netlist-floor-planned_final.def')
-
-    # run_utd_box_router(live_monitor, options, router_script_file, def_file)
-
-    logger.info('finished routing .......')
-    
-    ######## STA #########
-    logger.info('started STA .......')
-    output_dir = os.path.join(flow_result_directory, 'sta')
-    os.mkdir(output_dir)
-    sta_report_file = os.path.join(flow_result_directory, 'sta', 'report.txt')
-    sta_script_file = os.path.join(flow_result_directory, 'sta', 'sta.src')
-    spef_file = os.path.join(flow_result_directory, 'placement', 'etc', options['design_name'] + '-netlist-floor-planned', \
-        'experiment000', options['design_name'] + '-netlist-floor-planned_dp.spef')
-    
-    run_opensta(live_monitor, options, sta_script_file, netlist_file, constraint_file, spef_file, sta_report_file)
-    logger.info('finished STA .......')
+    ######## Alpha Release #########
+    run_alpha_release(live_monitor, options, flow_result_directory)
 
     # Zip the flow_dir and store it to AWS
+    logger.info('Finished flow. Zipping results ..')
     flow_result_zipped_file = str(flow_id) + '.zip'
     zipf = zipfile.ZipFile(flow_result_zipped_file, 'w', zipfile.ZIP_DEFLATED)
-    zipdir(flow_dir, zipf)
+    zipdir(flow_result_directory, zipf)
     zipf.close()
     result_url = aws.upload_file(flow_result_zipped_file, str(flow_id) + '.zip')
 
@@ -140,5 +94,6 @@ def start_flow_task(flow_id, repo_url):
 
     # notify openroad with completion (success/failure)
     notify_success(flow_id, result_url)
+    logger.info('Completed ..')
 
     return True

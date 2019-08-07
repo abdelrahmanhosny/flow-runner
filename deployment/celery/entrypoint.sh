@@ -26,6 +26,7 @@ done
 
 >&2 echo "Postgres is up - continuing..."
 
+source /tools/alpha-release/openroad/setup.sh
+
 # start celery worker
 celery -A flow worker -l info
-
