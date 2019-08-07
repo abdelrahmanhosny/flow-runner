@@ -17,6 +17,8 @@ def run_alpha_release(live_monitor, options, flow_result_directory):
         env_variables += ['DESIGN_CONFIG=./designs/aes_nangate45.mk']
     elif options['design_name'] == 'GCD':
         env_variables += ['DESIGN_CONFIG=./designs/gcd_nangate45.mk']
+    elif options['design_name'] == 'IBEX':
+        env_variables += ['DESIGN_CONFIG=./designs/ibex_nangate45.mk']
     else:
         logs = 'Your design is not yet supported! <br>Please, check again later.'
         live_monitor.append(logs)

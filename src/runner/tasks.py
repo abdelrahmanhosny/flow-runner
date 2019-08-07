@@ -89,11 +89,11 @@ def start_flow_task(flow_id, repo_url):
     zipf.close()
     result_url = aws.upload_file(flow_result_zipped_file, str(flow_id) + '.zip')
 
-    # close connection to the live monitoring db
-    live_monitor.close()
-
     # notify openroad with completion (success/failure)
     notify_success(flow_id, result_url)
     logger.info('Completed ..')
+
+    # close connection to the live monitoring db
+    live_monitor.close()
 
     return True
