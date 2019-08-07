@@ -6,8 +6,8 @@ build:
   stage: build
   before_script:
     - cp /home/openroad/flow_runner.env src/.env
-    - cp -r /home/openroad/flow deployment/flow/
-    - cp -r /home/openroad/alpha-release deployment/alpha-release/
+    - cp -r /home/openroad/flow deployment/celery/flow/
+    - cp -r /home/openroad/alpha-release deployment/celery/alpha-release/
   script:
     - docker-compose build
   only:
@@ -21,8 +21,8 @@ deploy:
   stage: deploy
   before_script:
     - cp /home/openroad/flow_runner.env src/.env
-    - cp -r /home/openroad/flow deployment/flow/
-    - cp -r /home/openroad/alpha-release deployment/alpha-release/
+    - cp -r /home/openroad/flow deployment/celery/flow/
+    - cp -r /home/openroad/alpha-release deployment/celery/alpha-release/
   script:
     - docker-compose up -d
   only:
